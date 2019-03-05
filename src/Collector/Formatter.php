@@ -6,7 +6,6 @@ use Exception;
 use Http\Client\Exception\HttpException;
 use Http\Client\Exception\TransferException;
 use Http\Message\Formatter as MessageFormatter;
-use Http\Message\Formatter\CurlCommandFormatter;
 use Psr\Http\Client\NetworkExceptionInterface;
 use Psr\Http\Message\RequestInterface;
 use Psr\Http\Message\ResponseInterface;
@@ -27,15 +26,15 @@ final class Formatter implements MessageFormatter
     private $formatter;
 
     /**
-     * @var CurlCommandFormatter
+     * @var MessageFormatter
      */
     private $curlFormatter;
 
     /**
      * @param MessageFormatter     $formatter
-     * @param CurlCommandFormatter $curlFormatter
+     * @param MessageFormatter $curlFormatter
      */
-    public function __construct(MessageFormatter $formatter, CurlCommandFormatter $curlFormatter)
+    public function __construct(MessageFormatter $formatter, MessageFormatter $curlFormatter)
     {
         $this->formatter = $formatter;
         $this->curlFormatter = $curlFormatter;

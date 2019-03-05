@@ -7,8 +7,8 @@ use GuzzleHttp\Psr7\Response;
 use Http\Client\Exception\HttpException;
 use Http\HttplugBundle\Collector\Collector;
 use Http\HttplugBundle\Collector\Formatter;
-use Http\HttplugBundle\Collector\Stack;
 use Http\HttplugBundle\Collector\StackPlugin;
+use Http\Message\Formatter as MessageFormatter;
 use Http\Promise\FulfilledPromise;
 use Http\Promise\RejectedPromise;
 use PHPUnit\Framework\TestCase;
@@ -49,28 +49,23 @@ class StackPluginTest extends TestCase
 
     public function setUp()
     {
-        $this->collector = $this->getMockBuilder(Collector::class)->disableOriginalConstructor()->getMock();
-        $this->formatter = $this->getMockBuilder(Formatter::class)->disableOriginalConstructor()->getMock();
+        $this->collector = new Collector();
+        $messageFormatter = $this->createMock(MessageFormatter::class);
+        $this->formatter = new Formatter($messageFormatter, $this->createMock(MessageFormatter::class));
         $this->request = new Request('GET', '/');
         $this->response = new Response();
         $this->exception = new HttpException('', $this->request, $this->response);
 
-        $this->formatter
+        $messageFormatter
             ->method('formatRequest')
             ->with($this->request)
             ->willReturn('FormattedRequest')
         ;
 
-        $this->formatter
+        $messageFormatter
             ->method('formatResponse')
             ->with($this->response)
             ->willReturn('FormattedResponse')
-        ;
-
-        $this->formatter
-            ->method('formatException')
-            ->with($this->exception)
-            ->willReturn('FormattedException')
         ;
 
         $this->subject = new StackPlugin($this->collector, $this->formatter, 'default');
@@ -78,46 +73,19 @@ class StackPluginTest extends TestCase
 
     public function testStackIsInitialized()
     {
-        $this->collector
-            ->expects($this->once())
-            ->method('addStack')
-            ->with($this->callback(function (Stack $stack) {
-                $this->assertEquals('default', $stack->getClient());
-                $this->assertEquals('FormattedRequest', $stack->getRequest());
-
-                return true;
-            }))
-        ;
-        $this->collector
-            ->expects($this->once())
-            ->method('activateStack')
-        ;
-
         $next = function () {
             return new FulfilledPromise($this->response);
         };
 
         $this->subject->handleRequest($this->request, $next, function () {
         });
+        $stack = $this->collector->getActiveStack();
+        $this->assertEquals('default', $stack->getClient());
+        $this->assertEquals('FormattedRequest', $stack->getRequest());
     }
 
     public function testOnFulfilled()
     {
-        //Capture the current stack
-        $currentStack = null;
-        $this->collector
-            ->method('addStack')
-            ->with($this->callback(function (Stack $stack) use (&$currentStack) {
-                $currentStack = $stack;
-
-                return true;
-            }))
-        ;
-        $this->collector
-            ->expects($this->once())
-            ->method('deactivateStack')
-        ;
-
         $next = function () {
             return new FulfilledPromise($this->response);
         };
@@ -126,7 +94,7 @@ class StackPluginTest extends TestCase
         });
 
         $this->assertEquals($this->response, $promise->wait());
-        $this->assertInstanceOf(Stack::class, $currentStack);
+        $currentStack = $this->collector->getActiveStack();
         $this->assertEquals('FormattedResponse', $currentStack->getResponse());
     }
 
@@ -135,21 +103,6 @@ class StackPluginTest extends TestCase
      */
     public function testOnRejected()
     {
-        //Capture the current stack
-        $currentStack = null;
-        $this->collector
-            ->method('addStack')
-            ->with($this->callback(function (Stack $stack) use (&$currentStack) {
-                $currentStack = $stack;
-
-                return true;
-            }))
-        ;
-        $this->collector
-            ->expects($this->once())
-            ->method('deactivateStack')
-        ;
-
         $next = function () {
             return new RejectedPromise($this->exception);
         };
@@ -158,8 +111,8 @@ class StackPluginTest extends TestCase
         });
 
         $this->assertEquals($this->exception, $promise->wait());
-        $this->assertInstanceOf(Stack::class, $currentStack);
-        $this->assertEquals('FormattedException', $currentStack->getResponse());
+        $currentStack = $this->collector->getActiveStack();
+        $this->assertEquals('FormattedResponse', $currentStack->getResponse());
         $this->assertTrue($currentStack->isFailed());
     }
 
@@ -168,11 +121,6 @@ class StackPluginTest extends TestCase
      */
     public function testOnException()
     {
-        $this->collector
-            ->expects($this->once())
-            ->method('deactivateStack')
-        ;
-
         $next = function () {
             throw new \Exception();
         };
@@ -198,11 +146,6 @@ class StackPluginTest extends TestCase
             // PHPUnit 6.0 and above
             $this->expectException(\PHPUnit\Framework\Error\Warning::class);
         }
-
-        $this->collector
-            ->expects($this->once())
-            ->method('deactivateStack')
-        ;
 
         $next = function () {
             return 2 / 0;
