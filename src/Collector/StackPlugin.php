@@ -15,7 +15,7 @@ use Psr\Http\Message\ResponseInterface;
  *
  * @internal
  */
-class StackPlugin implements Plugin
+final class StackPlugin implements Plugin
 {
     use Plugin\VersionBridgePlugin;
 

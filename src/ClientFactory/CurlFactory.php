@@ -8,6 +8,8 @@ use Http\Message\StreamFactory;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
+ *
+ * @final
  */
 class CurlFactory implements ClientFactory
 {

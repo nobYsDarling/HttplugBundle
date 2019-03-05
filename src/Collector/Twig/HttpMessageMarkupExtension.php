@@ -4,6 +4,8 @@ namespace Http\HttplugBundle\Collector\Twig;
 
 /**
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
+ *
+ * @final
  */
 class HttpMessageMarkupExtension extends \Twig_Extension
 {

@@ -25,6 +25,8 @@ use Symfony\Component\Config\Definition\Exception\InvalidTypeException;
  *
  * @author David Buchmann <mail@davidbu.ch>
  * @author Tobias Nyholm <tobias.nyholm@gmail.com>
+ *
+ * @final
  */
 class Configuration implements ConfigurationInterface
 {
