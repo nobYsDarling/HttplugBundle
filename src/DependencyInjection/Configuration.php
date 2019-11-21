@@ -3,6 +3,7 @@
 namespace Http\HttplugBundle\DependencyInjection;
 
 use Http\Client\Common\Plugin\Cache\Generator\CacheKeyGenerator;
+use Http\Client\Common\Plugin\Cache\Listener\CacheListener;
 use Http\Client\Common\Plugin\CachePlugin;
 use Http\Client\Common\Plugin\Journal;
 use Http\Message\CookieJar;
@@ -670,6 +671,12 @@ class Configuration implements ConfigurationInterface
                 ->end()
                 ->integerNode('cache_lifetime')
                     ->info('The minimum time we should store a cache item')
+                ->end()
+                ->arrayNode('cache_listeners')
+                    ->info('An array of services to act on the response based on the results of the cache check. Must implement ' . CacheListener::class . ' Defaults to an empty array.')
+                    ->defaultValue([])
+                    ->prototype('scalar')
+                    ->end()
                 ->end()
                 ->integerNode('default_ttl')
                     ->info('The default max age of a Response')
