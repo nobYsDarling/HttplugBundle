@@ -219,6 +219,10 @@ class HttplugExtension extends Extension
                     unset($options['cache_listeners']);
                 }
 
+                if (empty($options['blacklisted_paths'])) {
+                    unset($options['blacklisted_paths']);
+                }
+
                 $definition
                     ->replaceArgument(0, new Reference($config['cache_pool']))
                     ->replaceArgument(1, new Reference($config['stream_factory']))

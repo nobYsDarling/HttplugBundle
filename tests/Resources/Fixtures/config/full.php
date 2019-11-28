@@ -103,6 +103,7 @@ $container->loadFromExtension('httplug', [
                 'cache_key_generator' => null,
                 'respect_response_cache_directives' => ['X-Foo'],
                 'cache_listeners' => [],
+                'blacklisted_paths' => ['\/path\/not-to-be\/cached'],
             ],
         ],
         'cookie' => [
